@@ -7,6 +7,13 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Netlify's secret scanner flags any env-var value it finds in the build output.
+  # The two NEXT_PUBLIC_* Supabase values are PUBLIC by design (the project URL and
+  # the anon key are meant to ship to the browser), so exclude just those two from
+  # scanning. The real secret, SUPABASE_SERVICE_ROLE_KEY, stays scanned — and it's
+  # never in the build (verified), so it would still trip the scanner if it ever
+  # leaked.
+  SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_ANON_KEY"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
