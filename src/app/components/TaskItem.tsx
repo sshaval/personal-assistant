@@ -3,7 +3,7 @@
 import { useTransition } from 'react'
 import { toggleTask, deleteTask } from '../actions'
 import type { Task } from '@/lib/types'
-import { CATEGORY_META, RECURRENCE_LABEL } from '@/lib/types'
+import { CATEGORY_META, recurrenceText } from '@/lib/types'
 import { dueMeta } from '@/lib/util'
 import { CreatorBadge } from './CreatorBadge'
 
@@ -71,19 +71,23 @@ export function TaskItem({ task, todayIso }: { task: Task; todayIso: string }) {
           )}
           {task.recurrence && task.recurrence !== 'none' && (
             <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-              ↻ {RECURRENCE_LABEL[task.recurrence]}
+              ↻ {recurrenceText(task.recurrence, task.recurrence_day)}
             </span>
           )}
-          {task.tag && (
+          {task.company ? (
+            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+              {task.company}
+            </span>
+          ) : task.tag ? (
             <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:bg-purple-500/15 dark:text-purple-300">
               {task.tag}
             </span>
-          )}
+          ) : null}
         </div>
       </div>
 
       <div className="flex shrink-0 flex-col items-center gap-1">
-        <CreatorBadge by={task.created_by} />
+        <CreatorBadge by={task.created_by} email={task.created_by_email} />
         <button
           onClick={() => startTransition(() => deleteTask(task.id))}
           className="rounded-md px-1 text-[11px] text-black/30 opacity-0 transition hover:text-red-600 group-hover:opacity-100 dark:text-white/30"

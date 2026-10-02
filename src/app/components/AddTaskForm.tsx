@@ -3,8 +3,8 @@
 import { useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { addTask } from '../actions'
-import { CATEGORY_ORDER, CATEGORY_META } from '@/lib/types'
-import type { TaskCategory } from '@/lib/types'
+import { CATEGORY_ORDER, CATEGORY_META, WEEKDAYS_LONG } from '@/lib/types'
+import type { Recurrence, TaskCategory } from '@/lib/types'
 
 function SubmitButton({ label = 'Add' }: { label?: string }) {
   const { pending } = useFormStatus()
@@ -32,6 +32,15 @@ export function AddTaskForm({
   const formRef = useRef<HTMLFormElement>(null)
   const [open, setOpen] = useState(variant === 'rail')
   const isRecurring = fixedCategory === 'recurring'
+
+  // Recurring column: cadence is controlled so the day picker can react to it.
+  const [recurrence, setRecurrence] = useState<Recurrence>('weekly')
+  const [recDay, setRecDay] = useState<number>(1)
+  function changeRecurrence(r: Recurrence) {
+    setRecurrence(r)
+    if (r === 'weekly') setRecDay((d) => (d >= 0 && d <= 6 ? d : 1))
+    else if (r === 'monthly') setRecDay((d) => (d >= 1 && d <= 31 ? d : 1))
+  }
 
   if (variant === 'column' && !open) {
     return (
@@ -87,14 +96,62 @@ export function AddTaskForm({
         )}
 
         {isRecurring && (
-          <select name="recurrence" defaultValue="weekly" className={field} aria-label="Repeats">
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-          </select>
+          <>
+            <select
+              name="recurrence"
+              value={recurrence}
+              onChange={(e) => changeRecurrence(e.target.value as Recurrence)}
+              className={field}
+              aria-label="Repeats"
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+            </select>
+
+            {(recurrence === 'weekly' || recurrence === 'monthly') && (
+              <select
+                name="recurrence_day"
+                value={String(recDay)}
+                onChange={(e) => setRecDay(Number(e.target.value))}
+                className={field}
+                aria-label={recurrence === 'weekly' ? 'Day of week' : 'Day of month'}
+              >
+                {recurrence === 'weekly'
+                  ? WEEKDAYS_LONG.map((d, i) => (
+                      <option key={i} value={i}>
+                        {d}
+                      </option>
+                    ))
+                  : Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+              </select>
+            )}
+          </>
         )}
 
-        <input type="date" name="due_date" className={field} aria-label="Due date" />
+        <input
+          name="company"
+          placeholder="Company"
+          autoComplete="off"
+          className={`w-32 ${field}`}
+          aria-label="Company"
+        />
+
+        <input
+          type="date"
+          name="due_date"
+          aria-label="Due date"
+          onClick={(e) => {
+            try {
+              e.currentTarget.showPicker()
+            } catch {}
+          }}
+          className={`${field} cursor-pointer`}
+        />
 
         <div className="ml-auto flex items-center gap-1.5">
           {variant === 'column' && (

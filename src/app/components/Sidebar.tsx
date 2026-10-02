@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { signOut } from '../auth/actions'
+import { Avatar } from './Avatar'
 
 type NavItem = { href: string; label: string; icon: React.ReactNode }
 
@@ -24,6 +26,20 @@ const ITEMS: NavItem[] = [
       </>
     ),
   },
+  // Hidden 2026-09-30 per Shayan (not using Calls for now). The /calls route + code
+  // still exist — restore the tab by uncommenting this item.
+  // {
+  //   href: '/calls',
+  //   label: 'Calls',
+  //   icon: (
+  //     <path
+  //       d="M5 4h3l2 5-2.5 1.5a11 11 0 0 0 5 5L14 13l5 2v3a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"
+  //       strokeWidth="2"
+  //       strokeLinecap="round"
+  //       strokeLinejoin="round"
+  //     />
+  //   ),
+  // },
   {
     href: '/tasks',
     label: 'Tasks',
@@ -35,17 +51,19 @@ const ITEMS: NavItem[] = [
       </>
     ),
   },
-  {
-    href: '/cim',
-    label: 'CIM Analyzer',
-    icon: (
-      <>
-        <circle cx="10.5" cy="10.5" r="6.5" strokeWidth="2" />
-        <path d="m20 20-4.2-4.2" strokeWidth="2" strokeLinecap="round" />
-        <path d="M8.5 11.5v1.5M10.5 8.5v4.5M12.5 10v3" strokeWidth="2" strokeLinecap="round" />
-      </>
-    ),
-  },
+  // Hidden 2026-09-30 per Shayan (not using CIM Analyzer for now). The /cim route +
+  // code still exist — restore the tab by uncommenting this item.
+  // {
+  //   href: '/cim',
+  //   label: 'CIM Analyzer',
+  //   icon: (
+  //     <>
+  //       <circle cx="10.5" cy="10.5" r="6.5" strokeWidth="2" />
+  //       <path d="m20 20-4.2-4.2" strokeWidth="2" strokeLinecap="round" />
+  //       <path d="M8.5 11.5v1.5M10.5 8.5v4.5M12.5 10v3" strokeWidth="2" strokeLinecap="round" />
+  //     </>
+  //   ),
+  // },
 ]
 
 function BrandMark() {
@@ -68,7 +86,13 @@ function BrandMark() {
   )
 }
 
-export function Sidebar() {
+export function Sidebar({
+  isAdmin,
+  user,
+}: {
+  isAdmin: boolean
+  user?: { email: string | null; displayName?: string | null } | null
+}) {
   const pathname = usePathname()
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href)
@@ -111,11 +135,72 @@ export function Sidebar() {
             </Link>
           )
         })}
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={[
+              'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+              isActive('/admin')
+                ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                : 'text-black/65 hover:bg-black/[.05] dark:text-white/65 dark:hover:bg-white/[.06]',
+            ].join(' ')}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="h-[18px] w-[18px] shrink-0"
+            >
+              <path
+                d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"
+                strokeWidth="2"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span>Admin</span>
+          </Link>
+        )}
       </div>
 
-      <p className="mt-auto hidden px-2 text-[11px] leading-relaxed text-black/35 md:block dark:text-white/35">
-        Summary &amp; Day&apos;s View are prepared by Claude Code. Tasks are live.
-      </p>
+      <div className="mt-auto flex flex-col gap-2">
+        {user && (
+          <div className="hidden items-center gap-2.5 rounded-lg px-2 py-1.5 md:flex">
+            <Avatar email={user.email} name={user.displayName} size={32} />
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-sm font-medium">
+                {user.displayName || user.email || 'Signed in'}
+              </p>
+              {user.email && (
+                <p className="truncate text-[11px] text-black/45 dark:text-white/45">{user.email}</p>
+              )}
+            </div>
+          </div>
+        )}
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium text-black/60 transition-colors hover:bg-black/[.05] dark:text-white/60 dark:hover:bg-white/[.06]"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="h-[18px] w-[18px] shrink-0"
+            >
+              <path
+                d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span>Sign out</span>
+          </button>
+        </form>
+        <p className="hidden px-2 text-[11px] leading-relaxed text-black/35 md:block dark:text-white/35">
+          Summary &amp; Day&apos;s View are prepared by Claude Code. Tasks are live.
+        </p>
+      </div>
     </nav>
   )
 }

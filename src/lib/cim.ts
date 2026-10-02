@@ -23,8 +23,20 @@ export class CimConfigError extends Error {}
 
 function cimDir(): string {
   const dir = process.env.CIM_ANALYZER_DIR
-  if (!dir) throw new CimConfigError('CIM_ANALYZER_DIR is not set in .env.local')
-  if (!existsSync(dir)) throw new CimConfigError(`CIM Analyzer folder not found at: ${dir}`)
+  // CIM reads a local PDF/Excel folder, so it only works on the Mac engine.
+  // When hosted (or before setup) CIM_ANALYZER_DIR is absent — surface a tidy
+  // "local only" message that the page banner / file route can show, rather than
+  // letting a filesystem error turn into a 500.
+  if (!dir) {
+    throw new CimConfigError(
+      'CIM Analyzer is only available on the local engine (CIM_ANALYZER_DIR is not configured on this host).',
+    )
+  }
+  if (!existsSync(dir)) {
+    throw new CimConfigError(
+      'CIM Analyzer folder is not reachable on this host — it runs on the local engine only.',
+    )
+  }
   return dir
 }
 

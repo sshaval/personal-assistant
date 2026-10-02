@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claudia task-autopilot watermark + manual-scan request (local only)
+.autopilot-state.json
+.autopilot-request.json
+
+# claudia briefing-refresh state + manual-regenerate request (local only)
+.briefing-state.json
+.briefing-request.json
+
+# claudia auth setup — temporary login passwords (local only, never commit)
+.auth-credentials.txt

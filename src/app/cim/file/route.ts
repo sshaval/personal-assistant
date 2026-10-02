@@ -4,7 +4,7 @@
 // inside CIM_ANALYZER_DIR by resolveDoc().
 
 import { readFile } from 'node:fs/promises'
-import { resolveDoc } from '@/lib/cim'
+import { resolveDoc, CimConfigError } from '@/lib/cim'
 import type { CimKind } from '@/lib/cim-meta'
 
 export const dynamic = 'force-dynamic'
@@ -38,6 +38,8 @@ export async function GET(req: Request): Promise<Response> {
       },
     })
   } catch (e) {
+    // CIM folder not present on this host (e.g. hosted deployment) — not a crash.
+    if (e instanceof CimConfigError) return new Response(e.message, { status: 503 })
     const msg = e instanceof Error ? e.message : 'Unknown error'
     return new Response(`Unable to read document. ${msg}`, { status: 500 })
   }

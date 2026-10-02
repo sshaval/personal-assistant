@@ -1,9 +1,14 @@
 import { loadLatestBriefing } from '@/lib/data'
-import { friendlyDate } from '@/lib/util'
+import { getBriefingState } from '@/lib/briefing'
+import { friendlyDate, friendlyDateTime } from '@/lib/util'
 import { BriefingPanel } from './components/BriefingPanel'
+import { BriefingRefreshButton } from './components/BriefingRefreshButton'
 
 export default async function SummaryPage() {
   const { briefing, error } = await loadLatestBriefing()
+
+  const bs = await getBriefingState()
+  const lastGeneratedLabel = bs.lastRunAt ? friendlyDateTime(bs.lastRunAt) : null
 
   const now = new Date()
   const today = now.toLocaleDateString('en-US', {
@@ -23,11 +28,17 @@ export default async function SummaryPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-8 sm:py-10">
-      <header className="mb-6">
-        <p className="text-sm text-black/50 dark:text-white/50">{today}</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-          {greeting}, Shayan
-        </h1>
+      <header className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm text-black/50 dark:text-white/50">{today}</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+            {greeting}, Shayan
+          </h1>
+        </div>
+        <BriefingRefreshButton
+          lastRunLabel={lastGeneratedLabel}
+          requestPending={bs.requestPending}
+        />
       </header>
 
       {error && (

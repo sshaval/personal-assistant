@@ -2,18 +2,22 @@
 
 import { useState } from 'react'
 import type { CreatedBy } from '@/lib/types'
+import { Avatar } from './Avatar'
 
 export function CreatorBadge({
   by,
+  email,
   size = 22,
 }: {
   by: CreatedBy
+  /** Email of the human author (migration_v9+). Null/absent for legacy tasks. */
+  email?: string | null
   size?: number
 }) {
   const [imgOk, setImgOk] = useState(true)
   const dim = { width: size, height: size }
 
-  // Claudia-created (only when explicitly attributed); everything else is "you".
+  // Claudia-created (only when explicitly attributed).
   if (by === 'claudia' && imgOk) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
@@ -39,6 +43,11 @@ export function CreatorBadge({
       </span>
     )
   }
+
+  // A person created it — show their specific avatar when we know who (migration_v9+).
+  if (email) return <Avatar email={email} size={size} />
+
+  // Legacy task with no recorded author — the original "you" badge.
   return (
     <span
       title="Added by you"

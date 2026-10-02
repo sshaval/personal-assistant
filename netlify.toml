@@ -1,0 +1,12 @@
+# Netlify build config for Claudia (Next.js 16 App Router: SSR, server actions,
+# middleware). The official Next.js runtime plugin handles routing/functions and
+# sets the publish directory itself. Pin Node to a version Netlify + Next 16
+# support. All secrets come from the Netlify UI env vars, never this file.
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

@@ -1,8 +1,11 @@
+import 'server-only'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 // Server-only Supabase client. It uses the service-role key, which bypasses
 // Row Level Security, so this module must NEVER be imported from a Client
-// Component. Created lazily so `next build` doesn't crash when env is absent.
+// Component — the `server-only` import above turns any such import into a BUILD
+// error, so the key can never be shipped to the browser. Created lazily so
+// `next build` doesn't crash when env is absent.
 let client: SupabaseClient | null = null
 
 export function getSupabase(): SupabaseClient {
