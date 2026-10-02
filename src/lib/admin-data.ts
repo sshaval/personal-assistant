@@ -1,30 +1,50 @@
 import 'server-only'
 import { getSupabase } from './supabase'
+import { ALL_TAB_KEYS, sanitizeTabs, type TabKey } from './tabs'
 
 export interface AdminUser {
   id: string
   email: string
   role: 'admin' | 'user'
   displayName: string | null
+  /** Tabs this user can access (admins always get all). */
+  allowedTabs: TabKey[]
   lastSignInAt: string | null
   createdAt: string | null
 }
 
-/** All accounts (from Supabase Auth) joined to their profile role. */
+/** All accounts (from Supabase Auth) joined to their profile role + tab grants. */
 export async function loadAdminUsers(): Promise<AdminUser[]> {
   const supabase = getSupabase()
   const { data: list } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 })
-  const { data: profiles } = await supabase.from('profiles').select('id, role, display_name')
+
+  // Include allowed_tabs when the column exists; fall back if not (pre-migration_v10).
+  let profiles: Record<string, unknown>[] | null = null
+  const r = await supabase.from('profiles').select('id, role, display_name, allowed_tabs')
+  if (r.error) {
+    const r2 = await supabase.from('profiles').select('id, role, display_name')
+    profiles = (r2.data as Record<string, unknown>[] | null) ?? null
+  } else {
+    profiles = (r.data as Record<string, unknown>[] | null) ?? null
+  }
   const byId = new Map((profiles ?? []).map((p) => [p.id as string, p]))
 
   return (list?.users ?? [])
     .map((u): AdminUser => {
       const p = byId.get(u.id)
+      const role: 'admin' | 'user' = p?.role === 'admin' ? 'admin' : 'user'
+      const allowedTabs: TabKey[] =
+        role === 'admin'
+          ? ALL_TAB_KEYS
+          : p && p.allowed_tabs != null
+            ? sanitizeTabs(p.allowed_tabs)
+            : ALL_TAB_KEYS
       return {
         id: u.id,
         email: u.email ?? '',
-        role: p?.role === 'admin' ? 'admin' : 'user',
+        role,
         displayName: (p?.display_name as string | null) ?? null,
+        allowedTabs,
         lastSignInAt: u.last_sign_in_at ?? null,
         createdAt: u.created_at ?? null,
       }

@@ -3,6 +3,7 @@ import { loadMeetings, loadDayRefresh } from '@/lib/data'
 import { torontoTodayISO, addDaysISO, friendlyDate, friendlyDateTime } from '@/lib/util'
 import { MeetingCard } from '../components/MeetingCard'
 import { RefreshButton } from '../components/RefreshButton'
+import { guardTab } from '@/lib/tab-guard'
 
 type DayKey = 'yesterday' | 'today' | 'tomorrow'
 
@@ -11,6 +12,7 @@ export default async function DayPage({
 }: {
   searchParams: Promise<{ d?: string }>
 }) {
+  await guardTab('day')
   const { d } = await searchParams
   const sel: DayKey = d === 'yesterday' ? 'yesterday' : d === 'tomorrow' ? 'tomorrow' : 'today'
 

@@ -3,8 +3,10 @@ import { torontoTodayISO } from '@/lib/util'
 import { KanbanBoard } from '../components/KanbanBoard'
 import { TaskItem } from '../components/TaskItem'
 import { SuggestTasksButton } from '../components/SuggestTasksButton'
+import { guardTab } from '@/lib/tab-guard'
 
 export default async function TasksPage() {
+  await guardTab('tasks')
   const { tasks, error } = await loadTasks()
   const todayIso = torontoTodayISO()
   const suggestionState = await loadSuggestionState()

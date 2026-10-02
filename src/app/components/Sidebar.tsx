@@ -5,13 +5,15 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { signOut } from '../auth/actions'
 import { Avatar } from './Avatar'
+import { type TabKey } from '@/lib/tabs'
 
-type NavItem = { href: string; label: string; icon: React.ReactNode }
+type NavItem = { href: string; label: string; tab: TabKey; icon: React.ReactNode }
 
 const ITEMS: NavItem[] = [
   {
     href: '/',
     label: 'Summary',
+    tab: 'summary',
     icon: (
       <path d="M4 5h16M4 10h16M4 15h10M4 20h7" strokeWidth="2" strokeLinecap="round" />
     ),
@@ -19,6 +21,7 @@ const ITEMS: NavItem[] = [
   {
     href: '/day',
     label: "Day's View",
+    tab: 'day',
     icon: (
       <>
         <rect x="3" y="4" width="18" height="17" rx="2" strokeWidth="2" />
@@ -43,6 +46,7 @@ const ITEMS: NavItem[] = [
   {
     href: '/tasks',
     label: 'Tasks',
+    tab: 'tasks',
     icon: (
       <>
         <rect x="3" y="4" width="5" height="16" rx="1.5" strokeWidth="2" />
@@ -89,9 +93,11 @@ function BrandMark() {
 export function Sidebar({
   isAdmin,
   user,
+  allowedTabs,
 }: {
   isAdmin: boolean
   user?: { email: string | null; displayName?: string | null } | null
+  allowedTabs: TabKey[]
 }) {
   const pathname = usePathname()
   const isActive = (href: string) =>
@@ -110,7 +116,7 @@ export function Sidebar({
       </div>
 
       <div className="flex gap-1 md:flex-col md:gap-0.5">
-        {ITEMS.map((item) => {
+        {ITEMS.filter((item) => allowedTabs.includes(item.tab)).map((item) => {
           const active = isActive(item.href)
           return (
             <Link

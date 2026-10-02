@@ -3,8 +3,10 @@ import { getBriefingState } from '@/lib/briefing'
 import { friendlyDate, friendlyDateTime } from '@/lib/util'
 import { BriefingPanel } from './components/BriefingPanel'
 import { BriefingRefreshButton } from './components/BriefingRefreshButton'
+import { guardTab } from '@/lib/tab-guard'
 
 export default async function SummaryPage() {
+  await guardTab('summary')
   const { briefing, error } = await loadLatestBriefing()
 
   const bs = await getBriefingState()

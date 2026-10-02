@@ -6,6 +6,7 @@ import { RailGate } from "./components/RailGate";
 import { loadTasks } from "@/lib/data";
 import { torontoTodayISO } from "@/lib/util";
 import { getSessionUser, type SessionUser } from "@/lib/auth";
+import { ALL_TAB_KEYS } from "@/lib/tabs";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -64,14 +65,17 @@ async function AppShell({
   user: SessionUser | null;
   children: React.ReactNode;
 }) {
-  const { tasks, error } = await loadTasks();
+  const tabs = user?.allowedTabs ?? ALL_TAB_KEYS;
+  const canTasks = tabs.includes("tasks");
+  // Only load the tasks rail when this user can access Tasks.
+  const { tasks, error } = canTasks ? await loadTasks() : { tasks: [], error: null };
   const todayIso = torontoTodayISO();
   return (
     <div className="flex min-h-full flex-col md:flex-row">
-      <Sidebar isAdmin={user?.role === "admin"} user={user} />
+      <Sidebar isAdmin={user?.role === "admin"} user={user} allowedTabs={tabs} />
       <div className="flex min-w-0 flex-1 flex-col xl:flex-row">
         <main className="min-w-0 flex-1">{children}</main>
-        <RailGate tasks={tasks} error={error} todayIso={todayIso} />
+        {canTasks && <RailGate tasks={tasks} error={error} todayIso={todayIso} />}
       </div>
     </div>
   );

@@ -3,8 +3,9 @@
 import { useState, useTransition } from 'react'
 import type { AdminUser } from '@/lib/admin-data'
 import { friendlyDateTime } from '@/lib/util'
-import { setUserRole, addUser, removeUser } from '../admin/actions'
+import { setUserRole, addUser, removeUser, setUserTabs } from '../admin/actions'
 import { Avatar } from './Avatar'
+import { APP_TABS, type TabKey } from '@/lib/tabs'
 
 const input =
   'rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-sm outline-none focus:border-blue-500 dark:border-white/15 dark:bg-black/30'
@@ -19,6 +20,17 @@ export function AdminUsers({ users, meId }: { users: AdminUser[]; meId: string }
     setNotice(null)
     start(async () => {
       const r = await setUserRole(u.id, u.role === 'admin' ? 'user' : 'admin')
+      if (!r.ok) setNotice(r.error)
+    })
+  }
+
+  function toggleTab(u: AdminUser, key: TabKey) {
+    setNotice(null)
+    const next = u.allowedTabs.includes(key)
+      ? u.allowedTabs.filter((k) => k !== key)
+      : [...u.allowedTabs, key]
+    start(async () => {
+      const r = await setUserTabs(u.id, next)
       if (!r.ok) setNotice(r.error)
     })
   }
@@ -103,9 +115,10 @@ export function AdminUsers({ users, meId }: { users: AdminUser[]; meId: string }
         {users.map((u) => (
           <li
             key={u.id}
-            className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-black/10 p-3 dark:border-white/10"
+            className="flex flex-col gap-2 rounded-xl border border-black/10 p-3 dark:border-white/10"
           >
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-3">
               <Avatar email={u.email} name={u.displayName} size={38} />
               <div className="min-w-0">
                 <p className="text-sm font-medium">
@@ -144,7 +157,35 @@ export function AdminUsers({ users, meId }: { users: AdminUser[]; meId: string }
               >
                 Remove
               </button>
+              </div>
             </div>
+
+            {u.role === 'admin' ? (
+              <p className="border-t border-black/5 pt-2 text-[11px] text-black/40 dark:border-white/10 dark:text-white/40">
+                Admins can access all tabs.
+              </p>
+            ) : (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-black/5 pt-2 dark:border-white/10">
+                <span className="text-[11px] font-medium tracking-wide text-black/40 uppercase dark:text-white/40">
+                  Can access
+                </span>
+                {APP_TABS.map((t) => (
+                  <label
+                    key={t.key}
+                    className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-black/70 select-none dark:text-white/70"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={u.allowedTabs.includes(t.key)}
+                      onChange={() => toggleTab(u, t.key)}
+                      disabled={isPending}
+                      className="h-3.5 w-3.5 rounded border-black/20 accent-blue-600 dark:border-white/20"
+                    />
+                    {t.label}
+                  </label>
+                ))}
+              </div>
+            )}
           </li>
         ))}
       </ul>

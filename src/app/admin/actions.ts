@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { getSupabase } from '@/lib/supabase'
 import { getSessionUser, type SessionUser } from '@/lib/auth'
+import { sanitizeTabs } from '@/lib/tabs'
 
 async function assertAdmin(): Promise<SessionUser> {
   const u = await getSessionUser()
@@ -31,6 +32,27 @@ export async function setUserRole(
     return { ok: true }
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : 'Could not change role' }
+  }
+}
+
+/** Set which app tabs a user can access (Summary / Day's View / Tasks). */
+export async function setUserTabs(
+  userId: string,
+  tabs: string[],
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  try {
+    await assertAdmin()
+    const clean = sanitizeTabs(tabs)
+    const { error } = await getSupabase()
+      .from('profiles')
+      .update({ allowed_tabs: clean, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+    if (error) throw new Error(error.message)
+    revalidatePath('/admin')
+    revalidatePath('/', 'layout') // refresh the sidebar's tab list app-wide
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Could not update tab access' }
   }
 }
 
